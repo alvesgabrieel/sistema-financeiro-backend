@@ -1,29 +1,39 @@
 import { Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dtos/createUser.dto';
-import { User } from './interfaces/user.interface';
+import { PublicUser, User } from './interfaces/user.interface';
 import * as bcrypt from 'bcrypt';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class UserService {
-    private users: User[] = [];
+
+    constructor(private readonly prisma: PrismaService) {}
 
     async getAllUsers(): Promise<User[]> {
-        return this.users;
+        return await this.prisma.user.findMany();
     }
 
-    async createUser(createUserDto: CreateUserDto): Promise<User> {
+    async getUserByEmail(email: string): Promise<User | null> {
+        const user = await this.prisma.user.findUnique({
+            where: {
+                email,
+            }
+        })
+        return user;
+    }
+
+    async createUser(createUserDto: CreateUserDto): Promise<PublicUser> {
         const passwordHashed = await bcrypt.hash(createUserDto.password, 10);
 
-        const user: User = {
-            ...createUserDto,
-            id: this.users.length + 1,
-            password: passwordHashed,
-        }
+        const user = await this.prisma.user.create({
+            data: {
+                ...createUserDto,
+                password: passwordHashed,
+            }
+        })
 
-        this.users.push(user);
+        const { password, ...rest } = user;
 
-        console.log(this.users)
-
-        return user
+        return rest as PublicUser;
     };
 }

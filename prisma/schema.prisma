@@ -4,8 +4,7 @@
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -24,26 +23,26 @@ enum ExpenseType {
 }
 
 model User {
-  id           String             @id @default(uuid())
-  name         String
-  email        String             @unique
-  password     String             
-  createdAt    DateTime           @default(now()) @map("created_at")
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now()) @map("created_at")
 
-  financialMonths FinancialMonth[]
-  categories      Category[]
-  tags            Tag[]
+  financialMonths   FinancialMonth[]
+  categories        Category[]
+  tags              Tag[]
   installmentGroups InstallmentGroup[]
 
   @@map("users")
 }
 
 model FinancialMonth {
-  id        String   @id @default(uuid())
-  userId    String   @map("user_id")
+  id     String @id @default(uuid())
+  userId Int    @map("user_id")
 
-  month     Int
-  year      Int
+  month Int
+  year  Int
 
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -53,18 +52,17 @@ model FinancialMonth {
   expenses      Expense[]
 
   @@unique([userId, month, year])
-
   @@map("financial_months")
 }
 
 model IncomeEntry {
-  id               String      @id @default(uuid())
-  financialMonthId String      @map("financial_month_id")
+  id               String @id @default(uuid())
+  financialMonthId String @map("financial_month_id")
 
   type       IncomeType
   title      String
-  amount     Decimal      @db.Decimal(10, 2)
-  receivedAt DateTime?    @map("received_at")
+  amount     Decimal    @db.Decimal(10, 2)
+  receivedAt DateTime?  @map("received_at")
 
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -74,12 +72,12 @@ model IncomeEntry {
 }
 
 model Category {
-  id        String   @id @default(uuid())
-  userId    String   @map("user_id")
+  id     String @id @default(uuid())
+  userId Int    @map("user_id")
 
-  name      String
-  color     String?
-  icon      String?
+  name  String
+  color String?
+  icon  String?
 
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -91,11 +89,11 @@ model Category {
 }
 
 model Tag {
-  id        String   @id @default(uuid())
-  userId    String   @map("user_id")
+  id     String @id @default(uuid())
+  userId Int    @map("user_id")
 
-  name      String
-  color     String?
+  name  String
+  color String?
 
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -118,8 +116,8 @@ model Expense {
   title       String
   description String?
 
-  amount      Decimal   @db.Decimal(10, 2)
-  expenseDate DateTime  @map("expense_date")
+  amount      Decimal  @db.Decimal(10, 2)
+  expenseDate DateTime @map("expense_date")
 
   isPaid Boolean @default(true) @map("is_paid")
 
@@ -137,12 +135,12 @@ model Expense {
 }
 
 model InstallmentGroup {
-  id     String @id @default(uuid())
+  id String @id @default(uuid())
 
-  userId String @map("user_id")
+  userId Int @map("user_id")
 
   title             String
-  totalAmount       Decimal @db.Decimal(10, 2) @map("total_amount")
+  totalAmount       Decimal @map("total_amount") @db.Decimal(10, 2)
   totalInstallments Int     @map("total_installments")
 
   createdAt DateTime @default(now()) @map("created_at")
