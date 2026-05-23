@@ -1,0 +1,172 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum IncomeType {
+  SALARY
+  EXTRA
+}
+
+enum ExpenseType {
+  FIXED
+  INSTALLMENT
+  VARIABLE
+}
+
+model User {
+  id           String             @id @default(uuid())
+  name         String
+  email        String             @unique
+  password     String             
+  createdAt    DateTime           @default(now()) @map("created_at")
+
+  financialMonths FinancialMonth[]
+  categories      Category[]
+  tags            Tag[]
+  installmentGroups InstallmentGroup[]
+
+  @@map("users")
+}
+
+model FinancialMonth {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+
+  month     Int
+  year      Int
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  incomeEntries IncomeEntry[]
+  expenses      Expense[]
+
+  @@unique([userId, month, year])
+
+  @@map("financial_months")
+}
+
+model IncomeEntry {
+  id               String      @id @default(uuid())
+  financialMonthId String      @map("financial_month_id")
+
+  type       IncomeType
+  title      String
+  amount     Decimal      @db.Decimal(10, 2)
+  receivedAt DateTime?    @map("received_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  financialMonth FinancialMonth @relation(fields: [financialMonthId], references: [id])
+
+  @@map("income_entries")
+}
+
+model Category {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+
+  name      String
+  color     String?
+  icon      String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  expenses Expense[]
+
+  @@map("categories")
+}
+
+model Tag {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+
+  name      String
+  color     String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  expenses Expense[]
+
+  @@map("tags")
+}
+
+model Expense {
+  id               String @id @default(uuid())
+  financialMonthId String @map("financial_month_id")
+
+  categoryId String? @map("category_id")
+  tagId      String? @map("tag_id")
+
+  type ExpenseType
+
+  title       String
+  description String?
+
+  amount      Decimal   @db.Decimal(10, 2)
+  expenseDate DateTime  @map("expense_date")
+
+  isPaid Boolean @default(true) @map("is_paid")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  financialMonth FinancialMonth @relation(fields: [financialMonthId], references: [id])
+
+  category Category? @relation(fields: [categoryId], references: [id])
+
+  tag Tag? @relation(fields: [tagId], references: [id])
+
+  installmentItems InstallmentItem[]
+
+  @@map("expenses")
+}
+
+model InstallmentGroup {
+  id     String @id @default(uuid())
+
+  userId String @map("user_id")
+
+  title             String
+  totalAmount       Decimal @db.Decimal(10, 2) @map("total_amount")
+  totalInstallments Int     @map("total_installments")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  installmentItems InstallmentItem[]
+
+  @@map("installment_groups")
+}
+
+model InstallmentItem {
+  id String @id @default(uuid())
+
+  installmentGroupId String @map("installment_group_id")
+  expenseId          String @unique @map("expense_id")
+
+  installmentNumber Int @map("installment_number")
+
+  amount Decimal @db.Decimal(10, 2)
+
+  installmentGroup InstallmentGroup @relation(fields: [installmentGroupId], references: [id])
+
+  expense Expense @relation(fields: [expenseId], references: [id])
+
+  @@map("installment_items")
+}
