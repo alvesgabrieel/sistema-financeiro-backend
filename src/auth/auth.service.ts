@@ -1,6 +1,5 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { UserService } from '../user/user.service';
-import type { PublicUser } from '../user/interfaces/user.interface';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 
@@ -11,12 +10,14 @@ export class AuthService {
         private readonly jwtService: JwtService
     ) {}
 
-    async signIn(email: string, pass: string): Promise<{ access_token: string }> {
+    async signIn(email: string, password?: string): Promise<{ access_token: string }> {
+        if (!password) throw new BadRequestException('Missing password');
+
         const user = await this.userService.getUserByEmail(email);
 
         if (!user) throw new UnauthorizedException();
 
-        const passwordValid = await bcrypt.compare(pass, user.password);
+        const passwordValid = await bcrypt.compare(password, user.password);
         if (!passwordValid) throw new UnauthorizedException();
         
         const payload = { sub: user.id, email: user.email };
