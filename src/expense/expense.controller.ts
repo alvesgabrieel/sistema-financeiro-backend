@@ -1,10 +1,11 @@
 import { Body, Controller, Post, Req, UnauthorizedException, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import 'multer';
 import { ExpenseService } from './expense.service';
 import type { ExpenseDto } from './dtos/expense.dto';
 import { Expense } from './interfaces/expense.interface';
 import type { Request } from 'express';
+import { parse } from 'csv-parse/sync';
+import 'multer';
 
 @Controller('expense')
 export class ExpenseController {
@@ -26,13 +27,13 @@ export class ExpenseController {
     @Post('import')
     @UseInterceptors(FileInterceptor('file'))
     importFile(@UploadedFile() file: Express.Multer.File) {
-        console.log('Nome:', file.originalname)
-        console.log('Tipo:', file.mimetype)
-        console.log('Tamanho:', file.size)
-        console.log('Conteúdo:')
-        console.log(file.buffer.toString())
+        const content = file.buffer.toString();
+        const records = parse(content, {
+            columns: true,
+        });
+        console.log(records);
+        return records
     }
-
 }
 
 
